@@ -1,0 +1,24 @@
+name: Build Android & iOS Scaffolds and APK
+on:
+  push: { branches: [ "main" ] }
+  workflow_dispatch:
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Ensure android/ and ios/ exist
+        run: |
+          if [ ! -d "android" ] || [ ! -d "ios" ]; then
+            flutter create --platforms=android,ios _tmpapp
+            [ ! -d "android" ] && cp -r _tmpapp/android . || true
+            [ ! -d "ios" ] && cp -r _tmpapp/ios . || true
+          fi
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
